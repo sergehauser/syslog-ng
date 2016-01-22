@@ -45,9 +45,9 @@ curl_module_init(GlobalConfig *cfg, CfgArgs *args)
 const ModuleInfo module_info =
 {
   .canonical_name = "curl",
-  .version = VERSION,
-  .description = "Please fill this description",
-  .core_revision = SOURCE_REVISION,
+  .version = SYSLOG_NG_VERSION,
+  .description = "The curl module provides HTTP destination support for syslog-ng.",
+  .core_revision = SYSLOG_NG_SOURCE_REVISION,
   .plugins = curl_plugins,
   .plugins_len = G_N_ELEMENTS(curl_plugins),
 };
