@@ -24,31 +24,7 @@
 #include "plugin.h"
 #include "plugin-types.h"
 
-extern CfgParser curl_parser;
-
-static Plugin curl_plugins[] =
+typedef struct
 {
-  {
-    .type = LL_CONTEXT_DESTINATION,
-    .name = "curl",
-    .parser = &curl_parser,
-  },
-};
-
-gboolean
-curl_module_init(GlobalConfig *cfg, CfgArgs *args)
-{
-  plugin_register(cfg, curl_plugins, G_N_ELEMENTS(curl_plugins));
-  return TRUE;
-}
-
-const ModuleInfo module_info =
-{
-  .canonical_name = "curl",
-  .version = SYSLOG_NG_VERSION,
-  .description = "The curl module provides HTTP destination support for syslog-ng.",
-  .core_revision = SYSLOG_NG_SOURCE_REVISION,
-  .plugins = curl_plugins,
-  .plugins_len = G_N_ELEMENTS(curl_plugins),
-};
-
+  gchar *url;
+} curl_driver;

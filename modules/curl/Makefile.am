@@ -3,7 +3,8 @@ modules_curl_libcurl_la_SOURCES = \
   modules/curl/curl-grammar.y       \
   modules/curl/curl-parser.c        \
   modules/curl/curl-parser.h        \
-  modules/curl/curl-plugin.c
+  modules/curl/curl.h               \
+  modules/curl/curl.c
 
 BUILT_SOURCES       +=      \
   modules/curl/curl-grammar.y       \
