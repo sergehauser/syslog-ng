@@ -20,11 +20,17 @@
  *
  */
 
-#include "cfg-parser.h"
-#include "plugin.h"
-#include "plugin-types.h"
+#ifndef SYSLOG_NG_CURL_CURL_H_INCLUDED
+#define SYSLOG_NG_CURL_CURL_H_INCLUDED 1
+
+#include "logthrdestdrv.h"
 
 typedef struct
 {
+  LogThrDestDriver super;
   gchar *url;
-} curl_driver;
+} CurlDestinationDriver;
+
+LogDriver *curl_dd_new(GlobalConfig *cfg);
+
+#endif

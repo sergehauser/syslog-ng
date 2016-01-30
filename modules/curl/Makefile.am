@@ -1,10 +1,11 @@
 module_LTLIBRARIES      += modules/curl/libcurl.la
 modules_curl_libcurl_la_SOURCES = \
+  modules/curl/curl.h               \
+  modules/curl/curl.c		    \
   modules/curl/curl-grammar.y       \
   modules/curl/curl-parser.c        \
   modules/curl/curl-parser.h        \
-  modules/curl/curl.h               \
-  modules/curl/curl.c
+  modules/curl/curl-plugin.c
 
 BUILT_SOURCES       +=      \
   modules/curl/curl-grammar.y       \

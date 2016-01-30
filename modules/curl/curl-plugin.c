@@ -20,28 +20,33 @@
  *
  */
 
-#include "driver.h"
-#include "cfg-parser.h"
-#include "curl-grammar.h"
+#include "curl.h"
+#include "plugin-types.h"
 
-extern int curl_debug;
+extern CfgParser curl_parser;
 
-int curl_parse(CfgLexer *lexer, LogDriver **instance, gpointer arg);
-
-static CfgLexerKeyword curl_keywords[] = {
-  { "curl", KW_CURL },
-  { NULL }
-};
-
-CfgParser curl_parser =
+static Plugin curl_plugins[] =
 {
-#if ENABLE_DEBUG
-  .debug_flag = &curl_debug,
-#endif
-  .name = "curl",
-  .keywords = curl_keywords,
-  .parse = (gint (*)(CfgLexer *, gpointer *, gpointer)) curl_parse,
-  .cleanup = (void (*)(gpointer)) log_pipe_unref,
+  {
+    .type = LL_CONTEXT_DESTINATION,
+    .name = "curl",
+    .parser = &curl_parser,
+  },
 };
 
-CFG_PARSER_IMPLEMENT_LEXER_BINDING(curl_, LogDriver **)
+gboolean
+curl_module_init(GlobalConfig *cfg, CfgArgs *args)
+{
+  plugin_register(cfg, curl_plugins, G_N_ELEMENTS(curl_plugins));
+  return TRUE;
+}
+
+const ModuleInfo module_info =
+{
+  .canonical_name = "curl",
+  .version = SYSLOG_NG_VERSION,
+  .description = "The curl module provides HTTP destination support for syslog-ng.",
+  .core_revision = SYSLOG_NG_SOURCE_REVISION,
+  .plugins = curl_plugins,
+  .plugins_len = G_N_ELEMENTS(curl_plugins),
+};
