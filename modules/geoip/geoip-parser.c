@@ -23,7 +23,7 @@
 
 #include "geoip-parser.h"
 #include "parser/parser-expr.h"
-#include "scratch-buffers2.h"
+#include "scratch-buffers.h"
 
 #include <GeoIPCity.h>
 
@@ -109,7 +109,7 @@ geoip_parser_process(LogParser *s, LogMessage **pmsg,
                               record->country_code,
                               strlen(record->country_code));
 
-  value = scratch_buffers2_alloc();
+  value = scratch_buffers_alloc();
 
   g_string_printf(value, "%f",
                   record->latitude);
