@@ -29,7 +29,7 @@
 #include "mainloop.h"
 #include "transport/transport-file.h"
 #include "transport/transport-pipe.h"
-#include "transport/transport-device.h"
+#include "transport-prockmsg.h"
 #include "logproto/logproto-record-server.h"
 #include "logproto/logproto-text-server.h"
 #include "logproto/logproto-dgram-server.h"
