@@ -50,6 +50,16 @@
 
 #include <iv.h>
 
+LogTransport *
+log_transport_devkmsg_new(gint fd)
+{
+  if (lseek(fd, 0, SEEK_END) < 0)
+    {
+      msg_error("Error seeking /dev/kmsg to the end",
+                evt_tag_str("error", g_strerror(errno)));
+    }
+  return log_transport_file_new(fd);
+}
 
 static inline gboolean
 _is_linux_dev_kmsg(const gchar *filename)
@@ -143,14 +153,7 @@ _construct_transport(FileReader *self, gint fd)
   else if (affile_is_linux_proc_kmsg(self->filename->str))
     return log_transport_device_new(fd, 10);
   else if (_is_linux_dev_kmsg(self->filename->str))
-    {
-      if (lseek(fd, 0, SEEK_END) < 0)
-        {
-          msg_error("Error seeking /dev/kmsg to the end",
-                    evt_tag_str("error", g_strerror(errno)));
-        }
-      return log_transport_device_new(fd, 0);
-    }
+    return log_transport_devkmsg_new(fd);
   else
     return log_transport_pipe_new(fd);
 }
