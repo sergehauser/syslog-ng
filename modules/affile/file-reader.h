@@ -43,6 +43,7 @@ typedef struct _FileReaderOptions {
   gint multi_line_mode;
   MultiLineRegexp *multi_line_prefix, *multi_line_garbage;
   LogReaderOptions reader_options;
+  gboolean exit_on_eof;
 } FileReaderOptions;
 
 typedef struct _FileReader
@@ -62,6 +63,7 @@ void file_reader_options_set_follow_freq(FileReaderOptions *options, gint follow
 gboolean file_reader_options_set_multi_line_mode(FileReaderOptions *options, const gchar *mode);
 gboolean file_reader_options_set_multi_line_prefix(FileReaderOptions *options, const gchar *prefix_regexp, GError **error);
 gboolean file_reader_options_set_multi_line_garbage(FileReaderOptions *options, const gchar *prefix_regexp, GError **error);
+void file_reader_options_set_exit_on_eof(FileReaderOptions *options, gboolean exit_on_eof);
 
 void file_reader_options_destroy(FileReaderOptions *options);
 

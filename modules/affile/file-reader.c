@@ -26,7 +26,6 @@
 #include "serialize.h"
 #include "gprocess.h"
 #include "stats/stats-registry.h"
-#include "mainloop.h"
 #include "transport/transport-file.h"
 #include "transport/transport-pipe.h"
 #include "transport-prockmsg.h"
@@ -49,6 +48,30 @@
 #include <stdlib.h>
 
 #include <iv.h>
+
+LogTransport *
+log_transport_followed_file_new(gint fd)
+{
+  LogTransport *self = log_transport_file_new(fd);
+
+  self->read = log_transport_file_read_and_ignore_eof_method;
+  return self;
+}
+
+LogTransport *
+log_transport_stdin_new(gint fd)
+{
+  return log_transport_file_new(fd);
+}
+
+LogTransport *
+log_transport_source_named_pipe_new(gint fd)
+{
+  LogTransport *self = log_transport_pipe_new(fd);
+
+  self->read = log_transport_file_read_and_ignore_eof_method;
+  return self;
+}
 
 LogTransport *
 log_transport_devkmsg_new(gint fd)
@@ -98,7 +121,8 @@ _recover_state(LogPipe *s, GlobalConfig *cfg, LogProtoServer *proto)
 {
   FileReader *self = (FileReader *) s;
 
-  if (self->file_reader_options->file_open_options.is_pipe || self->file_reader_options->follow_freq <= 0)
+  if (self->file_reader_options->file_open_options.is_pipe || self->file_reader_options->follow_freq <= 0
+      || self->file_reader_options->exit_on_eof)
     return;
 
   if (!log_proto_server_restart_with_state(proto, cfg->state, _format_persist_name(s)))
@@ -147,15 +171,20 @@ static LogTransport *
 _construct_transport(FileReader *self, gint fd)
 {
   if (self->file_reader_options->file_open_options.is_pipe)
-    return log_transport_pipe_new(fd);
+    {
+      if (self->file_reader_options->exit_on_eof)
+        return log_transport_stdin_new(fd);
+      else
+        return log_transport_source_named_pipe_new(fd);
+    }
   else if (self->file_reader_options->follow_freq > 0)
-    return log_transport_file_new(fd);
+    return log_transport_followed_file_new(fd);
   else if (affile_is_linux_proc_kmsg(self->filename->str))
-    return log_transport_device_new(fd, 10);
+    return log_transport_prockmsg_new(fd, 10);
   else if (_is_linux_dev_kmsg(self->filename->str))
     return log_transport_devkmsg_new(fd);
   else
-    return log_transport_pipe_new(fd);
+    return log_transport_file_new(fd);
 }
 
 static LogProtoServer *
@@ -323,20 +352,23 @@ _notify(LogPipe *s, gint notify_code, gpointer user_data)
 
   switch (notify_code)
     {
+    case NC_CLOSE:
+      if (self->file_reader_options->exit_on_eof)
+        cfg_shutdown(log_pipe_get_config(s));
+      break;
+
     case NC_FILE_MOVED:
-    {
       msg_verbose("Follow-mode file source moved, tracking of the new file is started",
                   evt_tag_str("filename", self->filename->str));
       _reopen_on_notify(s, TRUE);
       break;
-    }
+
     case NC_READ_ERROR:
-    {
       msg_verbose("Error while following source file, reopening in the hope it would work",
                   evt_tag_str("filename", self->filename->str));
       _reopen_on_notify(s, FALSE);
       break;
-    }
+
     default:
       break;
     }
@@ -436,6 +468,11 @@ file_reader_options_set_multi_line_garbage(FileReaderOptions *options, const gch
   return options->multi_line_garbage != NULL;
 }
 
+void
+file_reader_options_set_exit_on_eof(FileReaderOptions *options, gboolean exit_on_eof)
+{
+  options->exit_on_eof = exit_on_eof;
+}
 
 void
 file_reader_options_set_follow_freq(FileReaderOptions *options, gint follow_freq)
