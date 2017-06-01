@@ -34,6 +34,7 @@ import org.syslog_ng.elasticsearch_v2.ElasticSearchOptions;
 import org.syslog_ng.elasticsearch_v2.client.ESClient;
 import org.syslog_ng.elasticsearch_v2.messageprocessor.ESIndex;
 import org.syslog_ng.elasticsearch_v2.messageprocessor.ESMessageProcessorFactory;
+import org.syslog_ng.elasticsearch_v2.messageprocessor.http.HttpBulkMessageProcessorFlusher;
 import org.syslog_ng.elasticsearch_v2.messageprocessor.http.HttpMessageProcessor;
 import java.util.Set;
 import javax.net.ssl.SSLContext;
@@ -60,6 +61,7 @@ public class ESHttpClient implements ESClient {
 	private String authtype;
 	private JestClient client;
 	private HttpMessageProcessor messageProcessor;
+	private HttpBulkMessageProcessorFlusher flushDaemon;
 	protected Logger logger;
 
   public class HttpClientBuilderException extends RuntimeException {
@@ -82,6 +84,8 @@ public class ESHttpClient implements ESClient {
 		this.options = options;
 		logger = Logger.getRootLogger();
 		messageProcessor = ESMessageProcessorFactory.getMessageProcessor(options, this);
+		flushDaemon = new HttpBulkMessageProcessorFlusher(this.messageProcessor, options.getFlushTimeout());
+		flushDaemon.start();
 	}
 
   protected void setupHttpClientBuilder(HttpClientConfig.Builder httpClientConfigBuilder, ElasticSearchOptions options) {}
@@ -128,6 +132,7 @@ public class ESHttpClient implements ESClient {
 
 	@Override
 	public void close() {
+		flushDaemon.stopRun();
 		messageProcessor.flush();
 	}
 

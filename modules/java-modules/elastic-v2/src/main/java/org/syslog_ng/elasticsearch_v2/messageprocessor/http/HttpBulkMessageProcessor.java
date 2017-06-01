@@ -36,6 +36,8 @@ public class HttpBulkMessageProcessor extends  HttpMessageProcessor {
 	private Bulk.Builder bulk;
 	private int flushLimit;
 	private int messageCounter;
+	private boolean flushing = false;
+	private final Object lock = new Object();
 
 	public HttpBulkMessageProcessor(ElasticSearchOptions options, ESHttpClient client) {
 		super(options, client);
@@ -49,17 +51,22 @@ public class HttpBulkMessageProcessor extends  HttpMessageProcessor {
 
 	@Override
 	public void flush() {
-		logger.debug("Flushing messages for ES destination [mode=" + options.getClientMode() + "]");
-		Bulk bulkActions = bulk.build();
-		try {
-			client.getClient().execute(bulkActions);
+		synchronized(lock) {
+			if (flushing) {
+				return;
+			}
+			
+			flushing = true;
+			logger.debug("Flushing messages for ES destination [mode=" + options.getClientMode() + "]");
+			Bulk bulkActions = bulk.build();
+			try {
+				client.getClient().execute(bulkActions);
+			} catch (IOException e) {
+				logger.error(e.getMessage());
+			}
+			bulk = new Bulk.Builder();
+			messageCounter = 0;
 		}
-		catch (IOException e)
-		{
-			logger.error(e.getMessage());
-		}
-		bulk = new Bulk.Builder();
-		messageCounter = 0;
 	}
 
 	@Override
@@ -68,7 +75,9 @@ public class HttpBulkMessageProcessor extends  HttpMessageProcessor {
 		{
 			flush();
 		}
-		bulk = bulk.addAction(index);
+		synchronized(lock) {
+			bulk = bulk.addAction(index);
+		}
 		messageCounter++;
 		return true;
 	}
